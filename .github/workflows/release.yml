@@ -1,0 +1,214 @@
+name: Android Release Build
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build and Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run lint checks
+        run: ./gradlew lintRelease
+
+      - name: Decode Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_FILE }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "Error: KEYSTORE_FILE secret is not set"
+            exit 1
+          fi
+          echo $KEYSTORE_BASE64 | base64 -d > ${{ github.workspace }}/keystore.jks
+
+      - name: Create keystore.properties
+        run: |
+          echo "storeFile=${{ github.workspace }}/keystore.jks" > keystore.properties
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> keystore.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> keystore.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> keystore.properties
+
+      - name: Determine version
+        id: version
+        run: |
+          # Get the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest tag: $LATEST_TAG"
+
+          # Extract version numbers
+          VERSION=${LATEST_TAG#v}
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+
+          # Get commit messages since last tag
+          COMMITS=$(git log $LATEST_TAG..HEAD --pretty=format:"%s" 2>/dev/null || git log --pretty=format:"%s")
+
+          # Determine version bump based on conventional commits
+          if echo "$COMMITS" | grep -qi "^feat\!:\|^fix\!:\|^BREAKING CHANGE:"; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+            BUMP_TYPE="major"
+          elif echo "$COMMITS" | grep -qi "^feat:"; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            BUMP_TYPE="minor"
+          else
+            PATCH=$((PATCH + 1))
+            BUMP_TYPE="patch"
+          fi
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          VERSION_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+          echo "New version: v$NEW_VERSION (code: $VERSION_CODE, bump: $BUMP_TYPE)"
+
+      - name: Update version in build.gradle.kts
+        run: |
+          sed -i "s/versionCode = [0-9]*/versionCode = ${{ steps.version.outputs.version_code }}/" app/build.gradle.kts
+          sed -i "s/versionName = \"[^\"]*\"/versionName = \"${{ steps.version.outputs.version }}\"/" app/build.gradle.kts
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Sign APK
+        run: |
+          $ANDROID_HOME/build-tools/*/apksigner sign \
+            --ks ${{ github.workspace }}/keystore.jks \
+            --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
+            --ks-key-alias ${{ secrets.KEY_ALIAS }} \
+            --key-pass pass:${{ secrets.KEY_PASSWORD }} \
+            --out app/build/outputs/apk/release/kiro-sonnet-player-v${{ steps.version.outputs.version }}.apk \
+            app/build/outputs/apk/release/app-release-unsigned.apk
+
+      - name: Verify APK signature
+        run: |
+          $ANDROID_HOME/build-tools/*/apksigner verify \
+            app/build/outputs/apk/release/kiro-sonnet-player-v${{ steps.version.outputs.version }}.apk
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$LATEST_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --reverse)
+          else
+            CHANGELOG=$(git log $LATEST_TAG..HEAD --pretty=format:"- %s (%h)")
+          fi
+
+          # Organize by type
+          FEATURES=$(echo "$CHANGELOG" | grep "^- feat:" || echo "")
+          FIXES=$(echo "$CHANGELOG" | grep "^- fix:" || echo "")
+          OTHERS=$(echo "$CHANGELOG" | grep -v "^- feat:" | grep -v "^- fix:" || echo "")
+
+          # Build formatted changelog
+          FORMATTED_CHANGELOG="## What's Changed\n\n"
+
+          if [ -n "$FEATURES" ]; then
+            FORMATTED_CHANGELOG="${FORMATTED_CHANGELOG}### ✨ Features\n${FEATURES}\n\n"
+          fi
+
+          if [ -n "$FIXES" ]; then
+            FORMATTED_CHANGELOG="${FORMATTED_CHANGELOG}### 🐛 Bug Fixes\n${FIXES}\n\n"
+          fi
+
+          if [ -n "$OTHERS" ]; then
+            FORMATTED_CHANGELOG="${FORMATTED_CHANGELOG}### 🔧 Other Changes\n${OTHERS}\n\n"
+          fi
+
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$FORMATTED_CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Get APK size
+        id: apk_size
+        run: |
+          SIZE=$(du -h app/build/outputs/apk/release/kiro-sonnet-player-v${{ steps.version.outputs.version }}.apk | cut -f1)
+          echo "size=$SIZE" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Kiro Sonnet Player v${{ steps.version.outputs.version }}
+          body: |
+            ${{ steps.changelog.outputs.changelog }}
+
+            ---
+
+            ### 📦 Download
+            **APK Size:** ${{ steps.apk_size.outputs.size }}
+
+            ### 📋 Build Info
+            - **Version:** ${{ steps.version.outputs.version }}
+            - **Version Code:** ${{ steps.version.outputs.version_code }}
+            - **Min SDK:** 34 (Android 14)
+            - **Target SDK:** 35
+            - **Build Type:** Release (minified, optimized)
+
+            ### 🚀 Installation
+            1. Download the APK file below
+            2. Enable "Install from Unknown Sources" in your device settings
+            3. Open the APK file and follow the installation prompts
+
+            **Note:** This is a signed release build with ProGuard optimization enabled.
+          files: |
+            app/build/outputs/apk/release/kiro-sonnet-player-v${{ steps.version.outputs.version }}.apk
+          draft: false
+          prerelease: false
+
+      - name: Clean up keystore
+        if: always()
+        run: |
+          rm -f ${{ github.workspace }}/keystore.jks
+          rm -f keystore.properties
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/mapping/release/
+          retention-days: 30

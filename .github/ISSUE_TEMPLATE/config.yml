@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/yourusername/kiro-sonnet-player/discussions
+    about: Ask questions and discuss features with the community
+  - name: 📚 Documentation
+    url: https://github.com/yourusername/kiro-sonnet-player/blob/main/README.md
+    about: Read the documentation for help getting started
