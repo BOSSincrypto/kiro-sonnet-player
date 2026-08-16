@@ -283,12 +283,14 @@ class PlayerManager @Inject constructor(
     /**
      * Add a bookmark at current position.
      */
-    fun addBookmark(label: String = "") {
+    fun addBookmark(title: String = "") {
         currentVideoId?.let { videoId ->
-            val bookmark = Bookmark.create(
+            val timestamp = player.currentPosition
+            val bookmark = Bookmark(
+                id = "${videoId}_${timestamp}",
                 videoId = videoId,
-                timestamp = player.currentPosition,
-                label = label
+                timestamp = timestamp,
+                title = title.ifEmpty { "Bookmark ${_bookmarks.value.size + 1}" }
             )
             _bookmarks.value = (_bookmarks.value + bookmark).sortedBy { it.timestamp }
         }

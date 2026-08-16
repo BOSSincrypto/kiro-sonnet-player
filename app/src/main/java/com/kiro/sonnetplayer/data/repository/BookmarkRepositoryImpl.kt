@@ -133,7 +133,7 @@ class BookmarkRepositoryImpl @Inject constructor(
                 id = id,
                 videoId = videoId,
                 timestamp = timestamp,
-                label = label,
+                title = label,
                 createdAt = createdAt
             )
         }
@@ -144,7 +144,7 @@ class BookmarkRepositoryImpl @Inject constructor(
                     id = bookmark.id,
                     videoId = bookmark.videoId,
                     timestamp = bookmark.timestamp,
-                    label = bookmark.label,
+                    label = bookmark.title,
                     createdAt = bookmark.createdAt
                 )
             }

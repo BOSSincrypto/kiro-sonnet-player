@@ -275,7 +275,7 @@ class VideoRepositoryImpl @Inject constructor(
         emit(videos)
     }.flowOn(Dispatchers.IO)
 
-    override suspend fun clearCache() = withContext(Dispatchers.IO) {
+    override suspend fun clearCache(): Unit = withContext(Dispatchers.IO) {
         cacheDir.listFiles()?.forEach { file ->
             file.delete()
         }
