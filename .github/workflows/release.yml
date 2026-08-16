@@ -113,7 +113,8 @@ jobs:
 
       - name: Sign APK
         run: |
-          $ANDROID_HOME/build-tools/*/apksigner sign \
+          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
+          $BUILD_TOOLS/apksigner sign \
             --ks ${{ github.workspace }}/keystore.jks \
             --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
             --ks-key-alias ${{ secrets.KEY_ALIAS }} \
