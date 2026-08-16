@@ -116,8 +116,10 @@ jobs:
 
       - name: Sign APK
         run: |
-          # APK already signed by Gradle if keystore exists
-          if [ -f app/build/outputs/apk/release/app-release.apk ]; then
+          # Use universal APK created by splits
+          if [ -f app/build/outputs/apk/release/app-universal-release.apk ]; then
+            cp app/build/outputs/apk/release/app-universal-release.apk app/build/outputs/apk/release/kiro-sonnet-player-v${{ steps.version.outputs.version }}.apk
+          elif [ -f app/build/outputs/apk/release/app-release.apk ]; then
             cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/kiro-sonnet-player-v${{ steps.version.outputs.version }}.apk
           else
             # If not signed by Gradle, sign manually
