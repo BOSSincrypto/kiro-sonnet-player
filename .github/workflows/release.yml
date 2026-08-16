@@ -135,7 +135,8 @@ jobs:
 
       - name: Verify APK signature
         run: |
-          $ANDROID_HOME/build-tools/*/apksigner verify \
+          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
+          $BUILD_TOOLS/apksigner verify \
             app/build/outputs/apk/release/kiro-sonnet-player-v${{ steps.version.outputs.version }}.apk
 
       - name: Generate changelog
