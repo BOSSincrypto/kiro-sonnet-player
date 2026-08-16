@@ -8,10 +8,10 @@ data class Settings(
     val hardwareAcceleration: Boolean = true,
     val preferredQuality: VideoQuality = VideoQuality.AUTO
 ) {
-    enum class BufferSize {
-        SMALL,
-        MEDIUM,
-        LARGE
+    enum class BufferSize(val minBufferMs: Int, val maxBufferMs: Int) {
+        SMALL(15_000, 30_000),
+        MEDIUM(30_000, 50_000),
+        LARGE(50_000, 100_000)
     }
 
     enum class VideoQuality {
