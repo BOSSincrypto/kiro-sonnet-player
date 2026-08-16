@@ -3,7 +3,7 @@
 [![Android](https://img.shields.io/badge/Platform-Android_14+-3DDC84?logo=android&logoColor=white)](https://www.android.com/)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.20-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub release](https://img.shields.io/github/v/release/YOUR_USERNAME/kiro-sonnet-player)](https://github.com/YOUR_USERNAME/kiro-sonnet-player/releases)
+[![GitHub release](https://img.shields.io/github/v/release/BOSSincrypto/kiro-sonnet-player)](https://github.com/BOSSincrypto/kiro-sonnet-player/releases)
 
 **Ultra-optimized Android video player** with hardware acceleration, built for zero-lag performance and smooth playback.
 
@@ -107,7 +107,7 @@ This player is built for **maximum performance**:
 ## 📦 Download & Installation
 
 ### Latest Release
-Download the latest APK from [Releases](https://github.com/YOUR_USERNAME/kiro-sonnet-player/releases/latest)
+Download the latest APK from [Releases](https://github.com/BOSSincrypto/kiro-sonnet-player/releases/latest)
 
 ### Installation Steps
 1. Download the APK file
@@ -127,7 +127,7 @@ Download the latest APK from [Releases](https://github.com/YOUR_USERNAME/kiro-so
 ### Clone & Build
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/kiro-sonnet-player.git
+git clone https://github.com/BOSSincrypto/kiro-sonnet-player.git
 cd kiro-sonnet-player
 
 # Build debug APK

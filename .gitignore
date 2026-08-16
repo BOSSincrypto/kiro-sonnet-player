@@ -66,3 +66,7 @@ captures/
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# Keystore sensitive files
+KEYSTORE_INFO.md
+keystore_base64.txt
