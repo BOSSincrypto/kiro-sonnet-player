@@ -1,7 +1,7 @@
 package com.kiro.sonnetplayer.presentation.settings
 
 import androidx.compose.runtime.Immutable
-import com.kiro.sonnetplayer.domain.model.BufferSize
+import com.kiro.sonnetplayer.domain.model.Settings.BufferSize
 
 @Immutable
 data class SettingsUiState(

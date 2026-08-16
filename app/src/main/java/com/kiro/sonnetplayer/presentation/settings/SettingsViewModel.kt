@@ -3,7 +3,7 @@ package com.kiro.sonnetplayer.presentation.settings
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kiro.sonnetplayer.domain.model.BufferSize
+import com.kiro.sonnetplayer.domain.model.Settings.BufferSize
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
