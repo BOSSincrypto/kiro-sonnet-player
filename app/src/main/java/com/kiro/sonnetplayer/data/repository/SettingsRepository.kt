@@ -1,7 +1,7 @@
 package com.kiro.sonnetplayer.data.repository
 
 import com.kiro.sonnetplayer.data.local.PreferencesDataSource
-import com.kiro.sonnetplayer.domain.model.PlayerSettings
+import com.kiro.sonnetplayer.domain.model.Settings
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -10,9 +10,9 @@ import javax.inject.Singleton
 class SettingsRepository @Inject constructor(
     private val preferencesDataSource: PreferencesDataSource
 ) {
-    val playerSettings: Flow<PlayerSettings> = preferencesDataSource.playerSettings
+    val playerSettings: Flow<Settings> = preferencesDataSource.playerSettings
 
-    suspend fun updateSettings(settings: PlayerSettings) {
+    suspend fun updateSettings(settings: Settings) {
         preferencesDataSource.updateSettings(settings)
     }
 }

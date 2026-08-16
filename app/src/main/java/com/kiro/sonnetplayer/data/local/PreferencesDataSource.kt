@@ -7,8 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.kiro.sonnetplayer.domain.model.PlayerSettings
-import com.kiro.sonnetplayer.domain.model.VideoQuality
+import com.kiro.sonnetplayer.domain.model.Settings
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -28,18 +27,18 @@ class PreferencesDataSource @Inject constructor(
         val PREFERRED_QUALITY = stringPreferencesKey("preferred_quality")
     }
 
-    val playerSettings: Flow<PlayerSettings> = context.dataStore.data.map { preferences ->
-        PlayerSettings(
+    val playerSettings: Flow<Settings> = context.dataStore.data.map { preferences ->
+        Settings(
             hardwareAcceleration = preferences[PreferencesKeys.HARDWARE_ACCELERATION] ?: true,
             autoPlay = preferences[PreferencesKeys.AUTO_PLAY] ?: true,
             rememberPosition = preferences[PreferencesKeys.REMEMBER_POSITION] ?: true,
-            preferredQuality = VideoQuality.valueOf(
-                preferences[PreferencesKeys.PREFERRED_QUALITY] ?: VideoQuality.AUTO.name
+            preferredQuality = Settings.VideoQuality.valueOf(
+                preferences[PreferencesKeys.PREFERRED_QUALITY] ?: Settings.VideoQuality.AUTO.name
             )
         )
     }
 
-    suspend fun updateSettings(settings: PlayerSettings) {
+    suspend fun updateSettings(settings: Settings) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.HARDWARE_ACCELERATION] = settings.hardwareAcceleration
             preferences[PreferencesKeys.AUTO_PLAY] = settings.autoPlay
